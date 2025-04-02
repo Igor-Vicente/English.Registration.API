@@ -12,20 +12,20 @@ namespace Languages.Registration.API.Configuration
             return new AppUser(model.Name, model.BirthDate, Idiom.English, model.AboutMe, model.ImageUrl, model.City, oid);
         }
 
-        public static ResponseUserViewModel ToResponseAppUser(this AppUser applicationUser)
+        public static ResponseUserViewModel? ToResponseAppUser(this AppUser appUser)
         {
-            return new ResponseUserViewModel()
+            return appUser == null ? null : new ResponseUserViewModel()
             {
-                Id = applicationUser.Id.ToString(),
-                Name = applicationUser.Name,
-                AboutMe = applicationUser.AboutMe,
-                BirthDate = applicationUser.BirthDate,
-                Idiom = applicationUser.Idiom,
-                City = applicationUser.City,
-                ImageUrl = applicationUser.ImageUrl,
-                CreatedAt = applicationUser.CreatedAt,
-                DeletedAt = applicationUser.DeletedAt,
-                LastAccess = applicationUser.LastAccess,
+                Id = appUser.Id.ToString(),
+                Name = appUser.Name,
+                AboutMe = appUser.AboutMe,
+                BirthDate = appUser.BirthDate,
+                Idiom = appUser.Idiom,
+                City = appUser.City,
+                ImageUrl = appUser.ImageUrl,
+                CreatedAt = appUser.CreatedAt,
+                DeletedAt = appUser.DeletedAt,
+                LastAccess = appUser.LastAccess,
             };
         }
     }

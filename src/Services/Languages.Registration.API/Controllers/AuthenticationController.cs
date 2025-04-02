@@ -1,4 +1,5 @@
 ﻿using Languages.Registration.API.Configuration;
+using Languages.Registration.API.Repositories.Contracts;
 using Languages.Registration.API.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -18,12 +19,17 @@ namespace Languages.Registration.API.Controllers
     {
         private readonly UserManager<MongoUser> _userManager;
         private readonly SignInManager<MongoUser> _signInManager;
+        private readonly IAppUserRepository _appUserRepository;
         private readonly JwtOptions _jwt;
 
-        public AuthenticationController(UserManager<MongoUser> userManager, SignInManager<MongoUser> signInManager, IOptions<JwtOptions> jwtOptions)
+        public AuthenticationController(UserManager<MongoUser> userManager,
+                                        SignInManager<MongoUser> signInManager,
+                                        IAppUserRepository appUserRepository,
+                                        IOptions<JwtOptions> jwtOptions)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _appUserRepository = appUserRepository;
             _jwt = jwtOptions.Value;
         }
 
@@ -43,10 +49,11 @@ namespace Languages.Registration.API.Controllers
             if (!result.Succeeded)
                 return BadRequestResponse(result);
 
-            var at = await GenerateAccessTokenAsync(model.Email);
-            var rt = await GenerateRefreshTokenAsync(model.Email);
+            var at = await GenerateAccessTokenAsync(aspNetUser);
+            var rt = await GenerateRefreshTokenAsync(aspNetUser);
+            var appUser = await _appUserRepository.GetAsync(aspNetUser.Id);
 
-            return Ok(new JwtResponseViewModel(at, rt));
+            return Ok(new JwtResponseViewModel(at, rt, appUser.ToResponseAppUser()));
         }
 
         [HttpPost("signin")]
@@ -58,16 +65,17 @@ namespace Languages.Registration.API.Controllers
 
             if (result.Succeeded)
             {
-                var at = await GenerateAccessTokenAsync(model.Email);
-                var rt = await GenerateRefreshTokenAsync(model.Email);
-
-                return Ok(new JwtResponseViewModel(at, rt));
+                var aspNetUser = await _userManager.FindByEmailAsync(model.Email);
+                var at = await GenerateAccessTokenAsync(aspNetUser);
+                var rt = await GenerateRefreshTokenAsync(aspNetUser);
+                var appUser = await _appUserRepository.GetAsync(aspNetUser.Id);
+                return Ok(new JwtResponseViewModel(at, rt, appUser.ToResponseAppUser()));
             }
 
             if (result.IsLockedOut)
-                BadRequestResponse("Usuário temporariamente bloaqueado por tentativas inválidas");
+                return BadRequestResponse("User temporarily blocked due to invalid attempts");
 
-            return BadRequestResponse("Usuário ou Senha inválido");
+            return BadRequestResponse("Invalid username or password");
         }
 
         [HttpPost("refresh-token")]
@@ -79,19 +87,19 @@ namespace Languages.Registration.API.Controllers
                 return BadRequestResponse("Invalid Token");
 
             var email = validatedToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email)?.Value;
-            var user = await _userManager.FindByEmailAsync(email);
-            var claims = await _userManager.GetClaimsAsync(user);
+            var aspNetUser = await _userManager.FindByEmailAsync(email);
+            var claims = await _userManager.GetClaimsAsync(aspNetUser);
             var jti = validatedToken.Claims.FirstOrDefault(claim => claim.Type == JwtRegisteredClaimNames.Jti)?.Value;
 
             if (!claims.Any(c => c.Type == "LastRefreshToken" && c.Value == jti))
                 return BadRequestResponse("Expired token");
 
-            if (user.LockoutEnabled)
-                if (user.LockoutEnd < DateTime.Now)
+            if (aspNetUser.LockoutEnabled)
+                if (aspNetUser.LockoutEnd < DateTime.Now)
                     return BadRequestResponse("User blocked");
 
-            var at = await GenerateAccessTokenAsync(email);
-            var rt = await GenerateRefreshTokenAsync(email);
+            var at = await GenerateAccessTokenAsync(aspNetUser);
+            var rt = await GenerateRefreshTokenAsync(aspNetUser);
 
             return Ok(new JwtResponseViewModel(at, rt));
         }
@@ -119,13 +127,12 @@ namespace Languages.Registration.API.Controllers
             }
         }
 
-        private async Task<string> GenerateAccessTokenAsync(string? email)
+        private async Task<string> GenerateAccessTokenAsync(MongoUser aspNetUser)
         {
-            var user = await _userManager.FindByEmailAsync(email);
-            var claims = await _userManager.GetClaimsAsync(user);
+            var claims = await _userManager.GetClaimsAsync(aspNetUser);
 
-            claims.Add(new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()));
-            claims.Add(new Claim(JwtRegisteredClaimNames.Email, user.Email));
+            claims.Add(new Claim(JwtRegisteredClaimNames.Sub, aspNetUser.Id.ToString()));
+            claims.Add(new Claim(JwtRegisteredClaimNames.Email, aspNetUser.Email));
             claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
             claims.Add(new Claim(JwtRegisteredClaimNames.Nbf, ToUnixEpochDate(DateTime.UtcNow).ToString()));
             claims.Add(new Claim(JwtRegisteredClaimNames.Iat, ToUnixEpochDate(DateTime.UtcNow).ToString(), ClaimValueTypes.Integer64));
@@ -147,12 +154,12 @@ namespace Languages.Registration.API.Controllers
             return tokenHandler.WriteToken(token);
         }
 
-        private async Task<string> GenerateRefreshTokenAsync(string? email)
+        private async Task<string> GenerateRefreshTokenAsync(MongoUser aspNetUser)
         {
             var jti = Guid.NewGuid().ToString();
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Email, email),
+                new Claim(JwtRegisteredClaimNames.Email, aspNetUser.Email),
                 new Claim(JwtRegisteredClaimNames.Jti, jti)
             };
 
@@ -169,7 +176,7 @@ namespace Languages.Registration.API.Controllers
                 TokenType = "rt+jwt"
             });
 
-            await UpdateLastGeneratedRtClaim(email, jti);
+            await UpdateLastGeneratedRtClaim(aspNetUser.Email, jti);
             return handler.WriteToken(securityToken);
         }
 

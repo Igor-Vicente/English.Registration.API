@@ -1,6 +1,8 @@
-﻿using Languages.Registration.API.Factories;
+﻿using Azure.Storage.Blobs;
+using Languages.Registration.API.Factories;
 using Languages.Registration.API.Repositories;
 using Languages.Registration.API.Repositories.Contracts;
+using Languages.Registration.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -31,6 +33,15 @@ namespace Languages.Registration.API.Configuration
             services.AddSingleton<MongoDbCollectionFactory>();
 
             services.AddScoped<IAppUserRepository, AppUserRepository>();
+
+            #region BlobStorage
+            services.AddSingleton(serviceProvider =>
+            {
+                var blobServiceClient = new BlobServiceClient(configuration["BlobStorage:ConnectionString"]);
+                return blobServiceClient.GetBlobContainerClient(configuration["BlobStorage:ContainerName"]);
+            });
+            services.AddSingleton<IBlobStorageService, BlobStorageService>();
+            #endregion
         }
 
         public static void AddSwaggerConfiguration(this IServiceCollection services)
@@ -64,9 +75,16 @@ namespace Languages.Registration.API.Configuration
 
         public static void AddIdentityConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddIdentity<MongoUser, MongoRole>()
+            services.AddIdentity<MongoUser, MongoRole>(o =>
+            {
+                o.Password.RequiredUniqueChars = 0;
+                o.Password.RequireUppercase = false;
+                o.Password.RequireNonAlphanumeric = false;
+                o.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                o.Lockout.MaxFailedAccessAttempts = 6;
+                o.Lockout.AllowedForNewUsers = true;
+            })
                 .AddDefaultTokenProviders()
-                .AddErrorDescriber<IdentityMessagePtBr>()
                 .AddIdentityMongoDbStores<MongoUser, MongoRole, ObjectId>(o =>
                 {
                     o.ConnectionString = configuration.GetConnectionString("MongoDb")

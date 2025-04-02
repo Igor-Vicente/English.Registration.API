@@ -42,43 +42,45 @@ namespace Languages.Registration.API.Models
         {
             RuleFor(x => x.Id)
                 .NotEmpty()
-                .WithMessage("Campo Id é obrigatório")
+                .WithMessage("The 'Id' field is required.")
                 .NotEqual(ObjectId.Empty)
-                .WithMessage("Id inválido");
+                .WithMessage("Invalid Id.");
 
             RuleFor(x => x.Name)
                 .NotEmpty()
-                .WithMessage("Campo nome é obrigatório")
+                .WithMessage("The 'Name' field is required.")
                 .MaximumLength(100)
-                .WithMessage("Nome deve ter no máximo 100 caracteres");
+                .WithMessage("The name must be at most 100 characters long.");
 
             RuleFor(x => x.AboutMe)
                 .NotEmpty()
-                .WithMessage("Campo descrição sobre mim é obrigatório")
+                .WithMessage("The 'About Me' field is required.")
                 .MaximumLength(1000)
-                .WithMessage("Minha descrição deve ter no máximo 1000 caracteres");
+                .WithMessage("The 'About Me' section must be at most 1000 characters long.");
 
             RuleFor(x => x.City)
                 .NotEmpty()
-                .WithMessage("Campo cidade é obrigatório")
+                .WithMessage("The 'City' field is required.")
                 .MaximumLength(100)
-                .WithMessage("Cidade deve ter no máximo 100 caracteres");
+                .WithMessage("The city name must be at most 100 characters long.");
 
             RuleFor(x => x.ImageUrl)
                 .NotEmpty()
-                .WithMessage("Imagem é obrigatório");
+                .WithMessage("An image is required.");
 
             RuleFor(x => x.BirthDate)
-             .Must(date => date < DateOnly.FromDateTime(DateTime.Now))
-             .WithMessage("Data inválida");
+                .NotEqual(new DateOnly())
+                .WithMessage("Please provide a valid date.")
+                .Must(date => date < DateOnly.FromDateTime(DateTime.Now))
+                .WithMessage("The birth date cannot be in the future.");
 
             RuleFor(x => x.DeletedAt)
                 .GreaterThan(x => x.CreatedAt)
-                .WithMessage("Data de exclusão deve ser posterior à data de criação");
+                .WithMessage("The deletion date must be later than the creation date.");
 
             RuleFor(x => x.Idiom)
                 .IsInEnum()
-                .WithMessage("Idioma inválido");
+                .WithMessage("Invalid language selection.");
         }
     }
 }
