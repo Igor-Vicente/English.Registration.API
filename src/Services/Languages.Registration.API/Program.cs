@@ -12,7 +12,7 @@ namespace Languages.Registration.API
             builder.Services.AddApiBehavior();
             builder.Services.AddSwaggerConfiguration();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddCorsPolicy();
+            builder.Services.AddCorsPolicy(builder.Configuration);
             builder.Services.AddDependencies(builder.Configuration);
             builder.Services.AddIdentityConfiguration(builder.Configuration);
             builder.Services.AddAutheticationConfiguration(builder.Configuration);

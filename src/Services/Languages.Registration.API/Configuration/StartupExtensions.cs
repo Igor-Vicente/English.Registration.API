@@ -120,7 +120,7 @@ namespace Languages.Registration.API.Configuration
             });
         }
 
-        public static void AddCorsPolicy(this IServiceCollection services)
+        public static void AddCorsPolicy(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddCors(options =>
             {
@@ -133,7 +133,7 @@ namespace Languages.Registration.API.Configuration
 
                 options.AddPolicy("Production", policy =>
                 {
-                    policy.WithOrigins();
+                    policy.WithOrigins(configuration["AllowedHosts"] ?? "");
                     policy.AllowAnyHeader();
                     policy.AllowAnyMethod();
                 });
