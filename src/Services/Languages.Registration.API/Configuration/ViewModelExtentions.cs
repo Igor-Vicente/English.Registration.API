@@ -7,11 +7,10 @@ namespace Languages.Registration.API.Configuration
 {
     public static class ViewModelExtentions
     {
-        public static AppUser ToAppUser(this RegisterAppUserViewModel model, ObjectId oid)
+        public static AppUser ToNewAppUser(this RegisterAppUserViewModel model, ObjectId oid)
         {
             return new AppUser(model.Name, model.BirthDate, Idiom.English, model.AboutMe, model.ImageUrl, model.City, oid);
         }
-
         public static ResponseUserViewModel? ToResponseAppUser(this AppUser appUser)
         {
             return appUser == null ? null : new ResponseUserViewModel()
@@ -27,6 +26,72 @@ namespace Languages.Registration.API.Configuration
                 DeletedAt = appUser.DeletedAt,
                 LastAccess = appUser.LastAccess,
             };
+        }
+        public static Module ToNewModule(this AddModuleViewModel model)
+        {
+            return new Module(model.Title, model.Priority, model.LessonsViewModel.ToNewLesson());
+        }
+        public static Lesson ToNewLesson(this AddLessonViewModel model)
+        {
+            return new Lesson(model.Title, model.Priority, model.VideoUrl, model.ThumbUrl, model.Content);
+        }
+        public static IEnumerable<Lesson> ToNewLesson(this AddLessonViewModel[] model)
+        {
+            var lessons = new List<Lesson>();
+
+            foreach (var lesson in model)
+            {
+                lessons.Add(lesson.ToNewLesson());
+            }
+
+            return lessons;
+        }
+        public static ResponseModuleViewModel ToResponseModule(this Module module)
+        {
+            var response = new ResponseModuleViewModel()
+            {
+                Id = module.Id.ToString(),
+                CreatedAt = module.CreatedAt,
+                Title = module.Title,
+                LessonsViewModel = module.Lessons.ToResponseLesson(),
+                Priority = module.Priority,
+            };
+
+            return response;
+        }
+        public static IEnumerable<ResponseModuleViewModel> ToResponseModule(this IEnumerable<Module> modules)
+        {
+            var model = new List<ResponseModuleViewModel>();
+
+            foreach (var module in modules)
+            {
+                model.Add(module.ToResponseModule());
+            }
+
+            return model;
+        }
+        public static ResponseLessonViewModel ToResponseLesson(this Lesson lesson)
+        {
+            return new ResponseLessonViewModel()
+            {
+                Id = lesson.Id.ToString(),
+                Content = lesson.Content,
+                Priority = lesson.Priority,
+                ThumbUrl = lesson.ThumbUrl,
+                Title = lesson.Title,
+                VideoUrl = lesson.VideoUrl
+            };
+        }
+        public static IEnumerable<ResponseLessonViewModel> ToResponseLesson(this IEnumerable<Lesson> lessons)
+        {
+            var model = new List<ResponseLessonViewModel>();
+
+            foreach (var lesson in lessons)
+            {
+                model.Add(lesson.ToResponseLesson());
+            }
+
+            return model;
         }
     }
 }

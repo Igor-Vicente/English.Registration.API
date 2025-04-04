@@ -70,7 +70,7 @@ namespace Languages.Registration.API.Models
 
             RuleFor(x => x.BirthDate)
                 .NotEqual(new DateOnly())
-                .WithMessage("Please provide a valid date.")
+                .WithMessage("Please provide a valid birthdate.")
                 .Must(date => date < DateOnly.FromDateTime(DateTime.Now))
                 .WithMessage("The birth date cannot be in the future.");
 

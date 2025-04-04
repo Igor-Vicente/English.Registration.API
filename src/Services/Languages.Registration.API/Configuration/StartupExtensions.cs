@@ -33,6 +33,7 @@ namespace Languages.Registration.API.Configuration
             services.AddSingleton<MongoDbCollectionFactory>();
 
             services.AddScoped<IAppUserRepository, AppUserRepository>();
+            services.AddScoped<IModuleRepository, ModuleRepository>();
 
             #region BlobStorage
             services.AddSingleton(serviceProvider =>

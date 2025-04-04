@@ -51,7 +51,7 @@ namespace Languages.Registration.API.Controllers
             if (model == null)
                 return BadRequestResponse("1MB limit input size");
 
-            if (model.Image == null || model.Image.Length == 0)
+            if (model.Image == null)
                 return BadRequestResponse("Provide your profile picture");
 
             var aspNetUser = await _userManager.GetUserAsync(User);
@@ -60,9 +60,9 @@ namespace Languages.Registration.API.Controllers
             if (appUser != null)
                 return BadRequestResponse("User has already been registered");
 
-            appUser = model.ToAppUser(aspNetUser.Id);
+            appUser = model.ToNewAppUser(aspNetUser.Id);
 
-            appUser.ImageUrl = "/imgs/default-profile.png";
+            appUser.ImageUrl = "/imgs/profile.png";
 
             if (!appUser.IsValid())
                 return BadRequestResponse(appUser.ValidationResult);
@@ -75,11 +75,24 @@ namespace Languages.Registration.API.Controllers
         }
 
         [HttpPut]
+        [RequestSizeLimit(1 * 1024 * 1024)] // 1MB
         public async Task<IActionResult> PutAsync(UpdateAppUserViewModel model)
         {
-            var aspNetUser = await _userManager.GetUserAsync(User);
+            if (model == null)
+                return BadRequestResponse("1MB limit input size");
 
+            var aspNetUser = await _userManager.GetUserAsync(User);
             var appUser = await _appUserRepository.GetAsync(aspNetUser.Id);
+
+            if (appUser == null)
+                return BadRequestResponse("User did not complete registration");
+
+            if (model.Image != null)
+            {
+                var imageUrl = await _blobStorage.UploadAsync(model.Image, $"{Guid.NewGuid()}.png", "image/png");
+                await _blobStorage.DeleteAsync(appUser.ImageUrl);
+                appUser.ImageUrl = imageUrl;
+            }
 
             appUser.Name = model.Name;
             appUser.AboutMe = model.AboutMe;

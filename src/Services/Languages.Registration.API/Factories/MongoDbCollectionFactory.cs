@@ -6,7 +6,7 @@ namespace Languages.Registration.API.Factories
     {
         public const string CHATS_COLLECTION = "chats";
         public const string APPLICATION_USERS_COLLECTION = "app-users";
-
+        public const string MODULES_COLLECTION = "modules";
 
         private readonly string _connectionString;
 
