@@ -48,7 +48,7 @@ stages:
         projects: '$(projectPath)'
         configuration: '$(buildConfiguration)'
         output: '$(Build.ArtifactStagingDirectory)/publish'
-        arguments: '--self-contained false'
+        arguments: '--self-contained false --no-build --configuration $(buildConfiguration) -o $(Build.ArtifactStagingDirectory)/publish' # You might have something like this, or missing the -o
         zipAfterPublish: true
 
     - task: PublishBuildArtifacts@1
