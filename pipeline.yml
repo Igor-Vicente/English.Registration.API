@@ -4,7 +4,7 @@ trigger:
   - main
 
 variables:
-- group: English-v2-API # Link to your variable group
+- group: English.v2.API.Library # Link to your variable group
   dotNetFrameworkVersion: '8.0'
   buildConfiguration: 'Release'
   projectPath: 'src/Services/Languages.Registration.API/Languages.Registration.API.csproj' # Specific project path
