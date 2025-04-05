@@ -45,7 +45,7 @@ namespace Languages.Registration.API.Configuration
             #endregion
         }
 
-        public static void AddSwaggerConfiguration(this IServiceCollection services)
+        public static void AddSwaggerConfig(this IServiceCollection services)
         {
             services.AddSwaggerGen(setup =>
             {
@@ -74,7 +74,7 @@ namespace Languages.Registration.API.Configuration
             });
         }
 
-        public static void AddIdentityConfiguration(this IServiceCollection services, IConfiguration configuration)
+        public static void AddIdentityConfig(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddIdentity<MongoUser, MongoRole>(o =>
             {
@@ -94,7 +94,7 @@ namespace Languages.Registration.API.Configuration
                 });
         }
 
-        public static void AddAutheticationConfiguration(this IServiceCollection services, IConfiguration configuration)
+        public static void AddAutheticationConfig(this IServiceCollection services, IConfiguration configuration)
         {
             var jwt = configuration.GetSection("Jwt").Get<JwtOptions>() ??
                 throw new InvalidOperationException("Jwt not defined in 'app settings'"); ;
