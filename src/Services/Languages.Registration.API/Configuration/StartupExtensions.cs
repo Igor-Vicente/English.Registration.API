@@ -133,7 +133,8 @@ namespace Languages.Registration.API.Configuration
 
                 options.AddPolicy("Production", policy =>
                 {
-                    policy.WithOrigins(configuration["AllowedHosts"] ?? "");
+                    var allowedOrigins = configuration["AllowedOrigins"]?.Split(";") ?? [];
+                    policy.WithOrigins(allowedOrigins);
                     policy.AllowAnyHeader();
                     policy.AllowAnyMethod();
                 });
