@@ -5,9 +5,9 @@ trigger:
 
 variables:
 - group: English.v2.API.Library # Link to your variable group
-  dotNetFrameworkVersion: '8.0'
-  buildConfiguration: 'Release'
-  projectPath: 'src/Services/Languages.Registration.API/Languages.Registration.API.csproj' # Specific project path
+  # dotNetFrameworkVersion: '8.0'
+  # buildConfiguration: 'Release'
+  # projectPath: 'src/Services/Languages.Registration.API/Languages.Registration.API.csproj' # Specific project path
 
 stages:
 - stage: Build
