@@ -1,0 +1,80 @@
+name: Deploy Languages.Registration.API (.NET 8.0) to Azure App Service (Linux)
+
+trigger:
+  - main
+
+variables:
+- group: English-v2-API # Link to your variable group
+  dotNetFrameworkVersion: '8.0'
+  buildConfiguration: 'Release'
+  projectPath: 'src/Services/Languages.Registration.API/Languages.Registration.API.csproj' # Specific project path
+
+stages:
+- stage: Build
+  displayName: Build and Publish
+
+  jobs:
+  - job: BuildAndPublish
+    displayName: Build and Publish
+    pool:
+      vmImage: 'ubuntu-latest'
+    timeoutInMinutes: 10
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Use .NET SDK $(dotNetFrameworkVersion)'
+      inputs:
+        packageType: 'sdk'
+        version: '$(dotNetFrameworkVersion)'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Restore NuGet Packages'
+      inputs:
+        command: 'restore'
+        projects: '$(projectPath)'
+        feedsToUse: 'select' # Optional: If you have specific feeds
+        # vstsFeed: 'YourVSTSFeedName' # Optional: Specify your Azure Artifacts feed
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Build Project'
+      inputs:
+        command: 'build'
+        projects: '$(projectPath)'
+        configuration: '$(buildConfiguration)'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish Project'
+      inputs:
+        command: 'publish'
+        projects: '$(projectPath)'
+        configuration: '$(buildConfiguration)'
+        output: '$(Build.ArtifactStagingDirectory)/publish'
+        arguments: '--self-contained false'
+        zipAfterPublish: true
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact: drop'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/publish.zip'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
+
+- stage: Deploy
+  displayName: Deploy to Azure App Service
+
+  dependsOn: Build
+
+  jobs:
+  - job: DeployWebApp
+    displayName: Deploy Web App
+    pool:
+      vmImage: 'ubuntu-latest'
+    timeoutInMinutes: 10
+    steps:
+    - task: AzureWebApp@1
+      displayName: 'Azure App Service Deploy: $(appServiceName)'
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        appType: 'webAppLinux'
+        appName: '$(appServiceName)'
+        package: '$(Pipeline.Workspace)/drop/$(Build.BuildId)_drop.zip'
+        deploymentMethod: 'auto'
