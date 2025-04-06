@@ -90,7 +90,7 @@ namespace Languages.Registration.API.Configuration
                 {
                     o.ConnectionString = configuration.GetConnectionString("MongoDb")
                         ?? throw new InvalidOperationException("ConnectionString not defined in 'app settings'");
-                    o.UsersCollection = "asp-net-users";
+                    o.UsersCollection = "aspnetusers";
                 });
         }
 
