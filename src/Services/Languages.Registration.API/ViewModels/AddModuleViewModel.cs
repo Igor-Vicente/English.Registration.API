@@ -4,7 +4,6 @@
     {
         public string Title { get; set; }
         public int Priority { get; set; }
-        public DateTime CreatedAt { get; set; }
         public AddLessonViewModel[] LessonsViewModel { get; set; }
     }
 
