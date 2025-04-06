@@ -34,7 +34,6 @@ namespace Languages.Registration.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAsync()
         {
-            Thread.Sleep(2000);
             var aspNetUser = await _userManager.GetUserAsync(User);
 
             var user = await _appUserRepository.GetAsync(aspNetUser.Id);
