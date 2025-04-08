@@ -1,11 +1,13 @@
 ﻿using FluentValidation.Results;
 using Languages.Registration.API.Configuration;
+using Languages.Registration.API.Models;
 using Languages.Registration.API.Repositories.Contracts;
 using Languages.Registration.API.Services;
 using Languages.Registration.API.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Store.MongoDb.Identity.Models;
 
 namespace Languages.Registration.API.Controllers
@@ -18,17 +20,14 @@ namespace Languages.Registration.API.Controllers
         private readonly IAppUserRepository _appUserRepository;
         private readonly UserManager<MongoUser> _userManager;
         private readonly IBlobStorageService _blobStorage;
-        private readonly ILogger<RegistrationController> _logger;
 
         public RegistrationController(IAppUserRepository applicationUserRepository,
                                       UserManager<MongoUser> userManager,
-                                      IBlobStorageService blobStorageService,
-                                      ILogger<RegistrationController> logger)
+                                      IBlobStorageService blobStorageService)
         {
             _appUserRepository = applicationUserRepository;
             _userManager = userManager;
             _blobStorage = blobStorageService;
-            _logger = logger;
         }
 
         [HttpGet]
@@ -120,6 +119,33 @@ namespace Languages.Registration.API.Controllers
 
             return NoContent();
         }
+
+        [HttpGet("users/range")]
+        public async Task<IActionResult> GetNearbyUsers([FromQuery] Coordinates coordinates, int range = 50000)
+        {
+            if (!ModelState.IsValid)
+                return BadRequestResponse(ModelState);
+
+            var aspNetUser = await _userManager.GetUserAsync(User);
+            var appUser = await _appUserRepository.GetAsync(aspNetUser.Id);
+
+            if (appUser == null)
+                return BadRequestResponse("User did not complete registration");
+
+            appUser.Location = new Location("Point", coordinates.Latitude, coordinates.Longitude);
+
+            if (!appUser.IsValid())
+                return BadRequestResponse(appUser.ValidationResult);
+
+            await _appUserRepository.UpdateAsync(appUser);
+
+            var users = await _appUserRepository.GetUsersInRange(coordinates, range);
+
+            return Ok(users.ToResponseAppUser());
+        }
+
+        private IActionResult BadRequestResponse(ModelStateDictionary modelState) =>
+           new BadRequestObjectResult(new { Success = false, Errors = modelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage) });
 
         private IActionResult BadRequestResponse(ValidationResult validationResult) =>
             new BadRequestObjectResult(new { Success = false, Errors = validationResult.Errors.Select(e => e.ErrorMessage) });

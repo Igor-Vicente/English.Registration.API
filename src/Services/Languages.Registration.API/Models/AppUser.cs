@@ -15,6 +15,7 @@ namespace Languages.Registration.API.Models
         public DateTime CreatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
         public DateTime LastAccess { get; set; }
+        public Location? Location { get; set; }
 
         public AppUser(string name, DateOnly birthDate, Idiom idiom, string aboutMe, string imageUrl, string city, ObjectId? id = null)
             : base(id)
@@ -34,6 +35,19 @@ namespace Languages.Registration.API.Models
             ValidationResult = new UserValidator().Validate(this);
             return ValidationResult.IsValid;
         }
+    }
+
+    public class Location
+    {
+        public string Type { get; set; }
+        public double[] Coordinates { get; set; }
+
+        public Location(string type, double latitude, double longitude)
+        {
+            Type = type;
+            Coordinates = [longitude, latitude];
+        }
+
     }
 
     public class UserValidator : AbstractValidator<AppUser>
@@ -81,6 +95,21 @@ namespace Languages.Registration.API.Models
             RuleFor(x => x.Idiom)
                 .IsInEnum()
                 .WithMessage("Invalid language selection.");
+
+            When(x => x.Location != null, () =>
+            {
+                RuleFor(x => x.Location.Type)
+                    .Equal("Point").WithMessage("Location.Type must be 'Point'.");
+
+                RuleFor(x => x.Location.Coordinates)
+                    .NotNull().WithMessage("Coordinates are required.")
+                    .Must(coords => coords.Length == 2)
+                        .WithMessage("Coordinates must have exactly two values: [longitude, latitude].")
+                    .Must(coords =>
+                        coords[0] >= -180 && coords[0] <= 180 && // longitude
+                        coords[1] >= -90 && coords[1] <= 90      // latitude
+                    ).WithMessage("Coordinates must be valid longitude and latitude values.");
+            });
         }
     }
 }

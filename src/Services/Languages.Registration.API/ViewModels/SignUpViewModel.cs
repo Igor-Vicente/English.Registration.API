@@ -2,7 +2,7 @@
 
 namespace Languages.Registration.API.ViewModels
 {
-    public struct SignUpViewModel
+    public class SignUpViewModel
     {
         [Required(ErrorMessage = "O campo {0} é obrigatório")]
         [EmailAddress(ErrorMessage = "E-mail inválido")]

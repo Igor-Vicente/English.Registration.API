@@ -25,7 +25,22 @@ namespace Languages.Registration.API.Configuration
                 CreatedAt = appUser.CreatedAt,
                 DeletedAt = appUser.DeletedAt,
                 LastAccess = appUser.LastAccess,
+                Coordinates = appUser.Location == null ?
+                    null : new Coordinates(appUser.Location.Coordinates[1], appUser.Location.Coordinates[0]),
             };
+        }
+        public static IEnumerable<ResponseUserViewModel> ToResponseAppUser(this IEnumerable<AppUser> appUsers)
+        {
+            var model = new List<ResponseUserViewModel>();
+
+            foreach (var appUser in appUsers)
+            {
+                var user = appUser.ToResponseAppUser();
+                if (user != null)
+                    model.Add(user);
+            }
+
+            return model;
         }
         public static Module ToNewModule(this AddModuleViewModel model)
         {

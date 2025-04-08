@@ -1,6 +1,6 @@
 ﻿namespace Languages.Registration.API.ViewModels
 {
-    public struct ResponseModuleViewModel
+    public class ResponseModuleViewModel
     {
         public string Id { get; set; }
         public string Title { get; set; }
