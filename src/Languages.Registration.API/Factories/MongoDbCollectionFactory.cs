@@ -4,7 +4,6 @@ namespace Languages.Registration.API.Factories
 {
     public class MongoDbCollectionFactory
     {
-        public const string CHATS_COLLECTION = "chats";
         public const string APPLICATION_USERS_COLLECTION = "appusers";
         public const string MODULES_COLLECTION = "modules";
 
