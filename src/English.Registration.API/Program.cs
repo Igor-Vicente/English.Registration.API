@@ -1,5 +1,6 @@
 
 using English.Registration.API.Configuration;
+using English.Registration.API.Extensions;
 using Serilog;
 
 namespace English.Registration.API

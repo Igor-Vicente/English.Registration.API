@@ -1,10 +1,10 @@
 ﻿using FluentValidation.Results;
-using English.Registration.API.Configuration;
 using English.Registration.API.Repositories.Contracts;
 using English.Registration.API.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using static English.Registration.API.Configuration.CustomAuthorize;
+using English.Registration.API.Extensions;
 
 namespace English.Registration.API.Controllers
 {

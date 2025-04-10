@@ -3,9 +3,9 @@ using English.Registration.API.Models;
 using English.Registration.API.ViewModels;
 using MongoDB.Bson;
 
-namespace English.Registration.API.Configuration
+namespace English.Registration.API.Extensions
 {
-    public static class ViewModelExtentions
+    public static class ViewModelExtensions
     {
         public static AppUser ToNewAppUser(this RegisterAppUserViewModel model, ObjectId oid)
         {

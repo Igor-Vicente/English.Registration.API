@@ -1,5 +1,4 @@
 ﻿using FluentValidation.Results;
-using English.Registration.API.Configuration;
 using English.Registration.API.Models;
 using English.Registration.API.Repositories.Contracts;
 using English.Registration.API.Services;
@@ -9,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Store.MongoDb.Identity.Models;
+using English.Registration.API.Extensions;
 
 namespace English.Registration.API.Controllers
 {

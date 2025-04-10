@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs;
+using English.Registration.API.Configuration;
 using English.Registration.API.Factories;
 using English.Registration.API.Repositories;
 using English.Registration.API.Repositories.Contracts;
@@ -14,7 +15,7 @@ using Store.MongoDb.Identity.Extensions;
 using Store.MongoDb.Identity.Models;
 using System.Text;
 
-namespace English.Registration.API.Configuration
+namespace English.Registration.API.Extensions
 {
     public static class StartupExtensions
     {
@@ -34,6 +35,7 @@ namespace English.Registration.API.Configuration
 
             services.AddScoped<IAppUserRepository, AppUserRepository>();
             services.AddScoped<IModuleRepository, ModuleRepository>();
+            services.AddScoped<IEmailSender, EmailSender>();
 
             #region BlobStorage
             services.AddSingleton(serviceProvider =>

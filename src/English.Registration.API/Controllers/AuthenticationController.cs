@@ -1,13 +1,17 @@
 ﻿using English.Registration.API.Configuration;
+using English.Registration.API.Extensions;
 using English.Registration.API.Repositories.Contracts;
+using English.Registration.API.Services;
 using English.Registration.API.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using MongoDB.Bson;
 using Store.MongoDb.Identity.Models;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
 using System.Text;
 
@@ -20,17 +24,20 @@ namespace English.Registration.API.Controllers
         private readonly UserManager<MongoUser> _userManager;
         private readonly SignInManager<MongoUser> _signInManager;
         private readonly IAppUserRepository _appUserRepository;
+        private readonly IEmailSender _emailSender;
         private readonly JwtOptions _jwt;
 
         public AuthenticationController(UserManager<MongoUser> userManager,
                                         SignInManager<MongoUser> signInManager,
                                         IAppUserRepository appUserRepository,
-                                        IOptions<JwtOptions> jwtOptions)
+                                        IOptions<JwtOptions> jwtOptions,
+                                        IEmailSender emailSender)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _appUserRepository = appUserRepository;
             _jwt = jwtOptions.Value;
+            _emailSender = emailSender;
         }
 
         [HttpPost("signup")]
@@ -102,6 +109,49 @@ namespace English.Registration.API.Controllers
             var rt = await GenerateRefreshTokenAsync(aspNetUser);
 
             return Ok(new JwtResponseViewModel(at, rt));
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequestResponse(ModelState);
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            if (user == null) // Don't reveal that the user does not exist
+                return Ok();
+
+            var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var userEncoded = WebUtility.UrlEncode(user.Id.ToString());
+            var codeEncoded = WebUtility.UrlEncode(code);
+            var callbackUrl = $"{_jwt.Audience}/new-password?code={codeEncoded}&user={userEncoded}";
+
+            await _emailSender.SendEmailResetPasswordAsync(model.Email, callbackUrl);
+
+            return Ok();
+        }
+
+        [HttpPost("new-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequestResponse(ModelState);
+
+            if (!ObjectId.TryParse(model.UserId, out var userId))
+                return BadRequestResponse("The link used is not valid");
+
+            var user = await _userManager.FindByIdAsync(model.UserId);
+
+            if (user == null)
+                return BadRequestResponse("The link used is not valid");
+
+            var result = await _userManager.ResetPasswordAsync(user, model.Code, model.Password);
+
+            if (!result.Succeeded)
+                return BadRequestResponse(result);
+
+            return Ok();
         }
 
         private bool ValidRefreshToken(string refreshToken, out JwtSecurityToken validatedToken)
